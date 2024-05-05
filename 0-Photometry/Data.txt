@@ -1,0 +1,3 @@
+Magnitude of the reference star (marked with a red circle) : 4.12 
+Find the magnitude of the 5 stars (A - E) using differential photometry.
+What is the magnitude of the faint star? (green "?")
