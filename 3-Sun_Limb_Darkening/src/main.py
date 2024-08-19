@@ -1,6 +1,7 @@
 from PIL import Image
 from astropy.io import fits
 from astropy.stats import sigma_clip
+from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -66,6 +67,16 @@ plt.plot(mu, intensity / intensity[0],
          color="mediumblue", label="Actual")
 plt.plot(mu, (2 + 3 * mu) / 5, color="red",
          ls="dashed", label="Eddington")
+# fitting a line on the intensity graph
+def eddington(mu, a, b):
+    return a + b * mu
+
+
+popt, pcov = curve_fit(
+    eddington, mu[int(len(mu)*0.4):], (intensity / intensity[0])[int(len(mu)*0.4):])
+perr = np.sqrt(np.diag(pcov))
+plt.plot(mu, eddington(mu, *popt), color="green", ls="dashed",
+         label=r"Fit: $\frac{I(\mu)}{I(0)} = a + b\mu$" + f"\n$a = {popt[0]:.2f} \pm {perr[0]:.2f}$\n$b = {popt[1]:.2f} \pm {perr[1]:.2f}$")
 
 plt.grid()
 plt.legend()
