@@ -64,23 +64,25 @@ def fit_gaussian(star_frame, star_center):
     intensity = np.bincount(r.ravel(), star_frame.ravel()
                             ) / np.bincount(r.ravel())
     # fit a gaussian to the intensity profile
-    popt, _ = curve_fit(gaussian, np.arange(
+    popt, perr = curve_fit(gaussian, np.arange(
         len(intensity)), intensity, p0=[1, 1])
-    return intensity, popt
-
+    return intensity, popt, perr
 
 intensities = []
 popts = []
+perrs = []
 for i in range(len(star_frames)):
     star_frame = star_frames[i]
     star_center = local_star_centers[i]
-    intensity, popt = fit_gaussian(star_frame, star_center)
+    intensity, popt, perr = fit_gaussian(star_frame, star_center)
     intensities.append(intensity)
     popts.append(popt)
+    perrs.append(np.sqrt(np.diag(perr)))
 
 for i in range(len(star_frames)):
     intensity = intensities[i]
     popt = popts[i]
+    perr = perrs[i]
     star_frame = star_frames[i]
     star_center = local_star_centers[i]
     star_radius = popt[1]
@@ -92,7 +94,8 @@ for i in range(len(star_frames)):
     axs[0].grid()
     axs[0].legend()
     # putting the text on left center of the plot
-    axs[0].text(0.1, 1.1*min(intensity / max(intensity)), f"Amplitude: {popt[0]:.2f}\n" + f"Standard deviation: {popt[1]:.2f}")
+    axs[0].text(0.05, 1.05*min(intensity / max(intensity)),
+                f"Amplitude: {popt[0]:.2f}" + r"$\pm$" + f" {perr[0]:.2f}\n" + f"Standard deviation: {np.abs(popt[1]):.2f}" + r"$\pm$" + f" {np.abs(perr[1]):.2f}", fontsize=8)
     axs[0].set_xlabel('Distance from the center')
     axs[0].set_ylabel('Intensity (Scaled)')
     axs[1].imshow(star_frame, cmap='gray')
@@ -105,3 +108,13 @@ for i in range(len(star_frames)):
     axs[1].axis('off')
     plt.savefig(figuredir + f'star_{i}.png')
     plt.close()
+
+sigmas = np.sort(np.abs(np.array(popts)[:, 1]))[0:-2]
+plt.hist(sigmas, bins=20, edgecolor="black")
+plt.title("Distribution of standard deviations of the Gaussian fits")
+plt.text(
+    11, 11, f"Median: {np.median(sigmas):.2f}, Standard deviation: {np.std(sigmas):.2f}", fontsize=12, bbox=dict(facecolor='white', alpha=0.5))
+plt.xlabel("Standard deviation")
+plt.ylabel("Frequency")
+plt.savefig(figuredir+"histogram.png")
+plt.show()
